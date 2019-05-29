@@ -58,9 +58,6 @@ class ImageGallerySaver {
     }
 
     tmpfile.copySync(savePath);
-    if (File(savePath).existsSync()) {
-      tmpfile.deleteSync();
-    }
     ImageGallerySaver.scanFile(savePath);
     return true;
   }
