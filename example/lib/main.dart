@@ -1,12 +1,12 @@
-import 'dart:typed_data';
+import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
-
+import 'package:path/path.dart' as path;
 import 'package:permission_handler/permission_handler.dart';
-
-import 'dart:ui' as ui;
+import 'package:path_provider/path_provider.dart';
 
 void main() => runApp(MyApp());
 
@@ -40,6 +40,10 @@ class _MyHomePageState extends State<MyHomePage> {
     ]);
   }
 
+  Dio dio = new Dio();
+  int i = 1;
+  double percent = 0.0;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,14 +59,21 @@ class _MyHomePageState extends State<MyHomePage> {
                   width: 200,
                   height: 200,
                   color: Colors.red,
+                  child: Center(
+                      child: Text(
+                    "data@$i",
+                    style: TextStyle(fontSize: 18),
+                  )),
                 ),
+              ),
+              SizedBox(
+                height: 20,
               ),
               Container(
                 child: RaisedButton(
                   onPressed: _saved,
-                  child: Text("保存到相册"),
+                  child: Text("保存到相册@$percent%"),
                 ),
-                width: 100,
                 height: 50,
               )
             ],
@@ -70,12 +81,28 @@ class _MyHomePageState extends State<MyHomePage> {
         ));
   }
 
+  String savePath;
+  String urlPath = "https://github.com/fck78315/image_gallery_saver/raw/master/example/%E9%9A%BE%E9%81%93%E4%B8%8D%E6%98%AF%E8%BF%99%E6%9D%A1%E8%A1%97%E6%9C%80%E8%80%80%E7%9C%BC%E7%9A%84%E7%A9%BA%E7%BF%BB%EF%BC%9F.mp4";
+
   _saved() async {
-    RenderRepaintBoundary boundary =
-        _globalKey.currentContext.findRenderObject();
-    ui.Image image = await boundary.toImage();
-    ByteData byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    final result = await ImageGallerySaver.save(byteData.buffer.asUint8List());
-    print(result);
+    //设置文件的名称
+    var basename = path.basename(Uri.parse(urlPath).path);
+    ImageGallerySaver.saveVideo("houkongfan.mp4", Download);
+  }
+
+  Future<File> Download() async {
+    //设置文件的名称
+    var basename = path.basename(Uri.parse(urlPath).path);
+    var tmpfilepath = (await getTemporaryDirectory()).path + "/$basename";
+    await dio.download(urlPath, tmpfilepath,
+        onReceiveProgress: (int count, int total) {
+      print("下载进度: $count/$total,savePath:$tmpfilepath");
+      percent = (count / total) * 100;
+      setState(() {});
+    }).then((e) {
+      print("下载完毕");
+      setState(() {});
+    });
+    return File(tmpfilepath);
   }
 }
