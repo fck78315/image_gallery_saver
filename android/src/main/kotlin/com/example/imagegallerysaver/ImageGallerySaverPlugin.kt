@@ -29,10 +29,22 @@ class ImageGallerySaverPlugin(private val registrar: Registrar): MethodCallHandl
   override fun onMethodCall(call: MethodCall, result: Result): Unit {
     if (call.method == "saveImageToGallery") {
       val image = call.arguments as ByteArray
-      result.success(saveImageToGallery(BitmapFactory.decodeByteArray(image,0,image.size)))
+      result.success(saveImageToGallery(BitmapFactory.decodeByteArray(image, 0, image.size)))
+    }else if(call.method == "scanFile") {
+      val filepath      = call.argument<String>("filepath")
+      result.success(scanFile(filepath.toString()))
+    }else if(call.method == "getDcimPath") {
+      result.success(getDcimPath())
     } else {
       result.notImplemented()
     }
+  }
+
+  private fun scanFile(filepath: String) :Boolean {
+    val context = registrar.activeContext().applicationContext
+    val uri = Uri.fromFile(File(filepath))
+    context.sendBroadcast(Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri))
+    return true
   }
 
   private fun saveImageToGallery(bmp: Bitmap): Boolean {
@@ -73,5 +85,13 @@ class ImageGallerySaverPlugin(private val registrar: Registrar): MethodCallHandl
       appName = "image_gallery_saver"
     }
     return  appName
+  }
+
+  /**
+   * 获取相册的路径
+   */
+  private fun getDcimPath(): String {
+    val root = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).toString()
+    return  root;
   }
 }
